@@ -1,0 +1,166 @@
+---
+title: "Math 423 midterm"
+author: "Caiwei Xiong"
+date: "28/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r is hard}
+file1 <- "http://www.math.mcgill.ca/yyang/regression/data/abalone.csv"
+abalone <- read.csv(file1, header = TRUE) 
+x = abalone$Height
+y = abalone$Rings
+summary (x) 
+var(x)
+summary(y)
+var(y)
+density_x <- density(x) 
+plot(density_x)
+density_y <- density(y) 
+plot(density_y)
+plot(x,main = "the height of abalone ", cex = 0.5, pch = 19, col = "lightpink")
+plot(y,main = "the rings of abalone ", cex = 0.5, pch = 19, col = "lightblue")
+m = lm(y~x)
+hist(x, main="histogram for height", col="lightpink", xlim=c(0,0.5), las=0.001, breaks=200, border= "black")
+hist(y, main="histogram for rings", col="lightblue", xlim=c(0,30), las=0.05, breaks=30,border= "black")
+plot(x,y,main = "Predicting number of rings using height of abalones ", cex = 0.5, pch = 19, col = "darkorange",xlab="height",ylab="rings")
+# plot the fitted regression line using least squares
+abline(m, lwd = 1, col="dodgerblue") 
+plot(lm(abalone$Rings~abalone$Height), pch = 20, col="darkorange")
+```
+
+deal with outliers: 
+```{r is terrible}
+file1 <- "http://www.math.mcgill.ca/yyang/regression/data/abalone.csv"
+abalone <- read.csv(file1, header = TRUE) 
+abalone <- abalone[-c(1258,1418,2052,3997),] 
+x = abalone$Height
+y = abalone$Rings
+plot(x,y,pch=19, col="darkorange",cex=0.5,xlab="height",ylab="rings") 
+m <- lm(y~x)
+abline(coef(m), col="dodgerblue" ) 
+plot(lm(abalone$Rings~abalone$Height), pch = 19, col="darkorange")
+plot(x, residuals(m), xlab="x", ylab="residuals",pch=19, col="darkorange") 
+abline(h=0, col="dodgerblue")
+summary(m)
+```
+
+
+
+Transform number of rings using a log transformation: 
+
+```{r is so hard}
+file1 <- "http://www.math.mcgill.ca/yyang/regression/data/abalone.csv"
+abalone <- read.csv(file1, header = TRUE) 
+abalone <- abalone[-c(1258,1418,2052,3997),] 
+y = log(abalone$Rings) 
+x = abalone$Height
+m = lm(y~x)
+plot(x,y,main = "log transformation on Rings and heights ", cex = 0.5, pch = 19, col = "darkorange",xlab="height",ylab="log transformation rings")
+# plot the fitted regression line using least squares
+abline(m, lwd = 1, col="dodgerblue")
+summary(m)
+plot(lm(log(abalone$Rings)~abalone$Height), pch = 19, col="darkorange")
+plot(x,residuals(m), xlab = "x", ylab = "residuals",pch=19, col="darkorange") 
+abline(h=0, col="dodgerblue")
+```
+
+confidence intervals:
+```{r is so so hard}
+confint(m, level = 0.95)
+```
+
+Permutation test： 
+```{r is so so so so hard} 
+file1 <- "http://www.math.mcgill.ca/yyang/regression/data/abalone.csv"
+abalone <- read.csv(file1, header = TRUE) 
+abalone <- abalone[-c(1258,1418,2052,3997),] 
+y = log(abalone$Rings) 
+x = abalone$Height
+m_original = lm(y~x)
+results <- summary(m_original)
+results$coef
+tstat_original <- results$coef[2,3]
+tstat_original
+
+permutation_test<- function(output, input, nrep = 1000){
+  tstat_vec<- rep(0,nrep)
+  for (i in 1:nrep){
+    y_permuted <- sample(output)
+    m_permuted <- lm(y_permuted ~ input)
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+    
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+#tstat_vec
+par(mfrow=c(1,1)) 
+hist(tstat_vec, main = "Histogram of permuted t-statstic", breaks = 100, col="lightpink", xlim= c(-100,100))
+abline(v = -tstat_original, col="red", lwd=4)
+abline(v = tstat_original, col="red", lwd =4)
+```
+
+
+height at 0.132:
+```{r is bad}
+input<- 0.132
+n <- length(x) 
+t_alphhalf <- qt(0.975,n-2) 
+Sxx<-(n-1)*var(x)
+beta0_hat<- as.numeric(coefficients(m)[1])
+beta1_hat<- as.numeric(coefficients(m)[2])
+Sigma_hat<- summary(m)$sigma
+CI<- c(beta0_hat+beta1_hat*input - t_alphhalf*Sigma_hat*sqrt(1/n+(input-mean(x))^2/Sxx), beta0_hat+ beta1_hat*input + t_alphhalf*Sigma_hat*sqrt(1/n+(input-mean(x))^2/Sxx))
+beta0_hat+beta1_hat*input
+```
+```{r is so bad} 
+exp(beta0_hat+beta1_hat*input)
+CI
+exp(CI[1])
+exp(CI[2])
+```
+
+
+KNN models: 
+
+```{r is so so so hard}
+library(MASS)
+library(FNN)
+file1 <- "http://www.math.mcgill.ca/yyang/regression/data/abalone.csv"
+abalone <- read.csv(file1, header = TRUE) 
+abalone <- abalone[-c(1258,1418,2052,3997),] 
+x_abalone = abalone$Height
+y_abalone = log(abalone$Rings) 
+
+Height_grid = data.frame(Height = seq(range(abalone$Height)[1], range(abalone$Height)[2], by = 0.01 ))
+
+pred_001 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =1)
+pred_010 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =10)
+pred_100 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =100) 
+pred_500 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =500) 
+pred_1000 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =1000)
+pred_2000 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =2000)
+pred_4000 = knn.reg(train = x_abalone, test = Height_grid, y = y_abalone, k =4000) 
+par(mfrow = c(3,2))
+
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 1") 
+lines(Height_grid$Height, pred_001$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 10") 
+lines(Height_grid$Height, pred_010$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 100") 
+lines(Height_grid$Height, pred_100$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 500") 
+lines(Height_grid$Height, pred_500$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 1000") 
+lines(Height_grid$Height, pred_1000$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 2000") 
+lines(Height_grid$Height, pred_2000$pred, col ="lightblue",lwd = 1)
+plot(y_abalone ~ x_abalone , data = abalone, cex = 0.8, col = "lightpink", main = "k = 4000") 
+lines(Height_grid$Height, pred_4000$pred, col ="lightblue",lwd = 1)
+
+```

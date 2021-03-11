@@ -1,0 +1,199 @@
+---
+title: "Math 423 assignment 1"
+author: "Caiwei Xiong   
+date: "04/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+### Question 6 
+a)
+```{r is hard}
+b0 = 5
+b1 = 3
+n = 100
+simulation.size = 1000
+beta1.hat = 0 
+e = rnorm(n)
+x = runif(n,-1,1)
+y = b0+b1*x+e
+fit = lm(y~x)
+plot(x,y,main = "Plot the data and fit the regression line", cex = 0.5, pch = 19, col = "red")
+# plot the true regression line
+abline(a=5,b=3, lwd =1,  col="darkorange") 
+# plot the fitted regression line using least squares
+m = lm(y~x)
+abline(m, lwd = 1, col="dodgerblue")
+
+```
+b)
+```{r is so hard}
+for(i in 1:simulation.size){
+  e = rnorm(n)
+  x =runif(n,-1,1)
+  y=b0 + b1*x +e
+  fit = lm(y~x)
+  beta1 =  coef(fit)[2]
+  beta1.hat[i] = beta1
+}    
+mean_beta1 = mean(beta1.hat)
+mean_beta1 #estimated mean is 3
+h = hist(beta1.hat,breaks=100, main= "Histogram of beta1 to beta1^(1000)", col="dodgerblue")
+```
+c)
+```{r is so so so hard}
+for(i in 1:simulation.size){
+  e = rcauchy(n)
+  x = runif(n,-1,1)
+  y = b0 +b1*x + e
+  fit2 = lm(y~x)
+  beta_1 = coef(fit2)[2] 
+  beta1.hat[i] = beta_1
+}
+  mean.beta_1=mean(beta1.hat)
+  h = hist(x =beta1.hat, breaks = 100, main = "Histogram when epsilon have a Cauchy- ditribution  ", col = "dodgerblue")
+```
+d)
+```{r is so so so so hard}
+beta0=5
+beta1=3
+x = runif(n,-1,1)
+d = rnorm(n,0,2)
+e = rnorm(n)
+w = x+ d
+y = b0 + b1*x +e
+fit3 = lm(y~w)
+plot(w,y,main= "Plot of y on w",  cex = 0.5, pch = 19, col = "red")
+ # plot the fitted regression line using least squares
+abline(fit3, col ="dodgerblue" )
+# plot the true regression line
+abline(a=5,b=3, lwd =1,  col="darkorange") 
+for (i in 1: simulation.size) {
+  x = runif(n,-1,1)
+  d = rnorm(n,0,sqrt(2))
+  e = rnorm(n)
+  w = x + d 
+  y = b0 + b1*x +e
+  fit_d2 = lm(y~w)
+  beta1 = coef(fit_d2)[2]
+  beta1.hat[i]=beta1
+}
+ mean.beta_1=mean(beta1.hat)
+ mean.beta_1
+h = hist(x= beta1.hat, breaks = 100, main = "Histogram of beta1 when x envolves error", col = "dodgerblue")
+```
+
+### Question 7 
+```{r pressssures}
+library("readr")
+library(FNN)
+kidney <- read_delim("http://www.math.mcgill.ca/yyang/regression/data/kidney.txt",
+                     " ", escape_double = FALSE, trim_ws = TRUE)
+kidney
+```
+#### 1) 
+```{r pressuree}
+
+x_kidney = kidney$age
+y_kidney = kidney$tot
+plot(tot ~ age, data = kidney, cex = 0.8, col = "dodgerblue" )
+```
+
+#### 2 + 3)
+
+```{r}
+age_grid = data.frame(age = seq(range(kidney$age)[1], range(kidney$age)[2], by = 0.01 ))
+pred_001 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =1)
+pred_005 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =5)
+pred_010 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =10)
+pred_025 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =25)
+pred_050 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =50)
+pred_157 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =157)
+
+par(mfrow = c(3,2))
+
+plot(tot ~ age , data = kidney, cex = 0.8, col = "lightpink", main = "k = 1") 
+lines(age_grid$age, pred_001$pred, col ="lightblue",lwd = 1)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 5") 
+lines(age_grid$age, pred_005$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 10") 
+lines(age_grid$age, pred_010$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 25") 
+lines(age_grid$age, pred_025$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 50") 
+lines(age_grid$age, pred_050$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 157") 
+lines(age_grid$age, pred_157$pred, col ="lightblue", lwd = 3)
+```
+
+
+#### 4) 
+
+```{r pressures}
+age_grid = data.frame(age = seq(1,18,by = 0.01 ))
+
+pred_001 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =1)
+pred_005 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =5)
+pred_010 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =10)
+pred_025 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =25)
+pred_050 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =50)
+pred_157 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =157)
+
+par(mfrow = c(3,2))
+
+plot(tot ~ age , data = kidney, cex = 0.8, col = "lightpink", main = "k = 1", xlim=c(0,120)) 
+lines(age_grid$age, pred_001$pred, col ="lightblue",lwd = 1)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 5", xlim=c(0,120)) 
+lines(age_grid$age, pred_005$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 10",xlim=c(0,120)) 
+lines(age_grid$age, pred_010$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 25",xlim=c(0,120)) 
+lines(age_grid$age, pred_025$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 50",xlim=c(0,120)) 
+lines(age_grid$age, pred_050$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 157",xlim=c(0,120)) 
+lines(age_grid$age, pred_157$pred, col ="lightblue", lwd = 3)
+```
+
+#### 5)
+```{r pressuress}
+age_grid = data.frame(age = seq(88,120,by = 0.01 ))
+
+pred_001 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =1)
+pred_005 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =5)
+pred_010 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =10)
+pred_025 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =25)
+pred_050 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =50)
+pred_157 = knn.reg(train = x_kidney, test = age_grid, y = y_kidney, k =157)
+
+par(mfrow = c(3,2))
+
+plot(tot ~ age , data = kidney, cex = 0.8, col = "lightpink", main = "k = 1",xlim=c(0,120)) 
+lines(age_grid$age, pred_001$pred, col ="lightblue",lwd = 1)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 5",xlim=c(0,120)) 
+lines(age_grid$age, pred_005$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 10",xlim=c(0,120)) 
+lines(age_grid$age, pred_010$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 25",xlim=c(0,120)) 
+lines(age_grid$age, pred_025$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 50",xlim=c(0,120)) 
+lines(age_grid$age, pred_050$pred, col ="lightblue", lwd = 3)
+
+plot(tot ~ age, data = kidney, cex = 0.8, col = "lightpink", main = "k = 157",xlim=c(0,120)) 
+lines(age_grid$age, pred_157$pred, col ="lightblue", lwd = 3)
+```
+

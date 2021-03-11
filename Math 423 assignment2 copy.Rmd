@@ -1,0 +1,463 @@
+---
+title: "Math 423 assignment 2"
+author: "Caiwei Xiong"
+date: "23/10/2020"
+output: html_document
+---
+
+#### Question 3
+1. 
+```{r code1}
+X1 = c(4,3,5,7)
+Y = as.matrix(c(6,2,4,11))
+fit <- lm(Y ~ X1) 
+summary(fit)
+
+```
+2. 
+```{r pressure}
+n<- length(X1) 
+X= as.matrix(cbind(rep(1,n),X1))
+XtX <- t(X)%*%X
+XtX_inv = solve(XtX) 
+beta = XtX_inv%*% t(X)%*%Y 
+beta  
+```
+
+#### Question 4
+```{r is hard }
+file1<-"http://www.math.mcgill.ca/yyang/regression/data/salary.csv"
+salary <-read.csv(file1 ,header=TRUE)
+x1<-salary$SPENDING/1000
+y<-salary$SALARY
+fit.Salary<-lm(y ~ x1);summary(fit.Salary)
+plot(x1,y)
+```
+1. Verify the Estimate column
+```{r is too hard}
+X <- cbind(1,x1)
+XTX  <- t(X)%*%X
+XTy <- t(X)%*% y
+beta.hat <- solve(XTX, t(X)%*%y)
+beta1 <- beta.hat[2]
+print(beta.hat)
+```
+This result as same as the output from the summary function.
+
+2. Verify numerically the orthogonality result 
+```{r is so so hard}
+RP.residuals <- residuals(fit.Salary)
+RP.fitted <- fitted(fit.Salary)
+sum(RP.residuals)
+sum(RP.residuals*(x1 - mean(x1)))
+sum(RP.fitted*RP.residuals)
+```
+
+3. Compute the value of the entry  in the Std.Error column
+```{r is so so so hard }
+fitted.y <- X %*% beta.hat
+residual.vec <- y - fitted.y
+SS_Res <-  sum(residual.vec^2)
+MS_Res <- SS_Res/(length(y)-2)
+sigma.hat <- sqrt (MS_Res)
+(estimated.covariance <- sigma.hat^2 * solve(XTX))
+```
+```{r is so so so hard QAQ}
+(ese.vals<- sqrt(diag(estimated.covariance)))
+
+```
+This result as same as the output from the summary function. 
+
+4. compute the Residual standard
+```{r is so so so so hard}
+fitted.y <- X %*% beta.hat
+residual.vec <- y - fitted.y
+SS_Res <-  sum(residual.vec^2)
+MS_Res <- SS_Res/(length(y)-2)
+sigma.hat <- sqrt (MS_Res)
+sigma.hat
+SS_Res
+```
+This result as same as the output from the summary function. 
+
+5. Test linear association between SALARY and SPENDING
+```{r is so so so so so hard}
+coef(fit.Salary)
+cor.test(x1,y,mehtod=c("person", "kendall", "spearman"))
+
+```
+
+
+6.
+```{r does not know how to write}
+confint(fit.Salary, level = 0.99)
+tstat = (beta1)/ 311.7043
+tstat
+mquantile = qt(1-0.01/2, df = length(y)-2)
+p_value = 2*pt(-abs(tstat), df =  length(y)-2)
+p_value
+```
+
+7. F- statistic 
+```{r is so so so so so so hard} 
+SS_T <- (length(y)-1 ) * var(y)
+SS_R <- SS_T - SS_Res 
+SS_T
+SS_R
+(R_squared <- SS_R / SS_T) 
+Fstat <- (SS_R/ (2-1)) / (SS_Res/(length(y)-2))
+Fstat 
+anova(fit.Salary)
+
+summary(fit.Salary)$fstatistic
+pf(Fstat, 1, length(y)-2, lower.tail = FALSE)
+```
+
+8. S_xy
+```{r wow} 
+S_xy <- sum((y - mean(y))* (x1 - mean(x1)))
+S_xy
+```
+
+9. spending per pupil is 5000
+```{r is fantastic} 
+y <- 12129.371 + 3307.585*5.0
+y
+```
+
+
+10.
+```{r kills me} 
+(x1new <- matrix(c(1,5.0), nrow = 1))
+pred.var <- sigma.hat^2 * x1new %*% solve(XTX) %*% t(x1new) 
+pred.var
+(sigma.hat_1<-sqrt(pred.var))
+```
+
+11.
+```{r kills me me }
+k = qt(1-0.025, df= length(x1)-2 )
+CIlower <- sum(summary(fit.Salary)$coef[,1]*c(1,5))- k* (sigma.hat_1) 
+CIupper <- sum(summary(fit.Salary)$coef[,1]*c(1,5))+ k* (sigma.hat_1)
+c("CIlower" = CIlower, "CIUpper" = CIupper)
+
+sigma_1 <- sigma.hat^2*(1+(1/length(x1)) + (((5-mean(x1))^2)/(var(x1)*(length(x1)-1))))
+PIlower <- sum(summary(fit.Salary)$coef[,1]*c(1,5)) - k*(sigma_1^(1/2))
+PIupper <- sum(summary(fit.Salary)$coef[,1]*c(1,5)) + k*(sigma_1^(1/2)) 
+
+c("PIlower" = PIlower, "PIUpper" = PIupper)                              
+
+predict(fit.Salary, newdata = data.frame(x1=5.0), interval = "confidence")
+predict(fit.Salary, newdata = data.frame(x1=5.0), interval = "prediction") 
+
+```
+
+
+#### Question 5
+1.
+```{r part 1}
+data.source <- "http://www.math.mcgill.ca/yyang/regression/data/genetic_data.csv"
+genetic_data <- read.csv(file = data.source)
+head(genetic_data)
+dim(genetic_data)
+x<- genetic_data[,2]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+plot(y~x, xlab = "Gene_x", ylab = "Gene_y", main="Original data")
+abline(m_original)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+#print(tstat_vec)
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+hist(tstat_vec, main="Histgram of permuted t-statistic", breaks = 100, xlim = c(-20,20))
+abline(v= - tstat_original, col="red", lwd = 4)
+abline(v= tstat_original, col="red", lwd = 4)
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+2.
+```{r part 2}
+# this method does not work 
+y<- genetic_data[,1] 
+permutation_test_2 <- function(output, input, nrep  = 1000){
+  for (i in 3:11){
+    tstat_vec <- rep(0, nrep)
+    x <-genetic_data[,i]
+    #print(i)
+    for(j in 1:nrep){
+      y_permuted <- sample(output) 
+      m_permuted <- lm(y_permuted ~ input) 
+      results <- summary(m_permuted)
+      tstat_vec[j] <- results$coef[2,3]
+      #print(i*j)
+      #print(tstat_vec[j])
+    }
+  }
+#  print(tstat_vec)
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test_2(y,x,nrep = M) 
+par(mfrow = c(1,1))
+hist(tstat_vec, main="Histgram of permuted t-statistic", breaks = 100, xlim = c(-20,20))
+abline(v= - tstat_original, col="red", lwd = 4)
+abline(v= tstat_original, col="red", lwd = 4)
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for gtwo}
+data.source <- "http://www.math.mcgill.ca/yyang/regression/data/genetic_data.csv"
+genetic_data <- read.csv(file = data.source)
+x<- genetic_data[,3]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+
+```
+```{r for gthree }
+x<- genetic_data[,4]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+```{r for gfour} 
+x<- genetic_data[,5]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+
+```
+
+```{r for gfive}
+x<- genetic_data[,6]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for gsix}
+x<- genetic_data[,7]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for gseven}
+x<- genetic_data[,8]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for geight}
+x<- genetic_data[,9]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for gnine}
+x<- genetic_data[,10]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r for gten}
+x<- genetic_data[,11]
+y<- genetic_data[,1]
+m_original <- lm(y~x)
+results<- summary(m_original)
+results$coef
+(tstat_original <- results$coef[2,3])
+
+permutation_test <- function(output, input, nrep  = 1000){
+  tstat_vec <- rep(0, nrep)
+  for(i in 1:nrep){
+    y_permuted <- sample(output) 
+    m_permuted <- lm(y_permuted ~ input) 
+    results <- summary(m_permuted)
+    tstat_vec[i] <- results$coef[2,3]
+  }
+  return(tstat_vec)
+}
+M = 1000
+tstat_vec<- permutation_test(y,x,nrep = M) 
+par(mfrow = c(1,1))
+p <- sum(tstat_vec > abs(tstat_original)| tstat_vec < - abs(tstat_original))/M
+p
+```
+
+```{r part4} 
+summary(lm(genetic_data[,2]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,3]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,4]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,5]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,6]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,7]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,8]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,9]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,10]  ~ genetic_data[,1]))
+summary(lm(genetic_data[,11]  ~ genetic_data[,1]))
+```
+

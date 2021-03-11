@@ -1,0 +1,206 @@
+---
+title: "Math 423 Assignment 3"
+author: "Caiwei Xiong"
+date: "22/11/2020"
+output: html_document
+---
+#### Question 2
+```{r part a2}
+data(stackloss)
+names(stackloss)
+help(stackloss)
+pairs(stackloss, font.labels = 3, font.axis = 5, pch = 16)
+```
+```{r part b2}
+model <- lm(stack.loss ~ Air.Flow +  Water.Temp + Acid.Conc., data = stackloss)
+summary(model)
+```
+```{r part c2} 
+library(knitr)
+kable(confint(model, level = 0.9), digits = 5, caption = "90% Confidence Intervals")
+```
+```{r part d22}
+kable(predict(model, newdata = data.frame(Air.Flow = 58, Water.Temp = 20, Acid.Conc. = 86), interval = "prediction", level = 0.99), digits = 5, caption = "99% Prediction Interval", col.names = c("prediction", "Lower Bound", "Upper Bound"))
+```
+```{r part e} 
+kable(anova(model), digits = 5, caption = "ANOVA Table" )
+```
+
+
+#### Question 3
+
+```{r part a3}
+data("ChickWeight")
+names(ChickWeight)
+attach(ChickWeight)
+coplot(weight ~ Time| Chick, data = ChickWeight, type= "b", show.given = FALSE)
+```
+```{r part b3}
+sixthchick  <- ChickWeight[ChickWeight$Chick==6, ]
+par(mfrow = c(1,2))
+# linear model
+linear_model <- lm(weight ~ Time, data = sixthchick)
+with(sixthchick, plot(Time, weight, col = NA, pch = 19,axes = FALSE, xlab="Time",ylab="Weight"))
+axis(side = 1, at = c(0,5,10,15,20), as.character(c(0,5,10,15,20)),font = 5)
+axis(side = 2, at = seq(0,300,25), as.character(seq(0,300,25)), font = 5)
+with(sixthchick, points(Time, weight, col = "lightpink", pch = 1))
+# plot the fitted regression line using least squares
+abline(linear_model, col = "lightblue", lwd = 1)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+
+# residuals
+plot(sixthchick$Time, residuals(linear_model), col = NA, axes = FALSE, xlab= "Time", ylab = "Residuals", font.lab = 3)
+axis(side = 1, at = c(0,5,10,15,20), as.character(c(0,5,10,15,20)), font = 5)
+axis(side = 2, at = seq(-70,30,10), labels = as.character(seq(-70,30,10)), font = 5)
+points(sixthchick$Time, residuals(linear_model), col = "lightpink")
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+```{r part b two}
+# polynomial model
+par(mfrow=c(1,2))
+polynomial_model <- lm(weight ~ Time + I(Time ^ 2) + I(Time ^ 3) + I(Time ^ 4), data = sixthchick)
+with(sixthchick, plot(Time, weight, col = NA, pch = 19,axes = FALSE, xlab="Time",ylab="Weight"))
+axis(side = 1, at = c(0,5,10,15,20), as.character(c(0,5,10,15,20)),
+font = 5)
+axis(side = 2, at = seq(0,300,25), as.character(seq(0,300,25)),
+font = 5)
+with(sixthchick, points(Time, weight, col = "lightpink", pch = 1))
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+lines(sixthchick$Time, fitted(polynomial_model), col = "lightblue", lwd = 1)
+
+# residuals
+plot(sixthchick$Time, residuals(polynomial_model), col = NA, axes = FALSE, xlab= "Time", ylab = "Residuals", font.lab = 3)
+axis(side = 1, at = c(0,5,10,15,20), as.character(c(0,5,10,15,20)), font = 5)
+axis(side = 2, at = seq(-70,30,10), labels = as.character(seq(-70,30,10)), font = 5)
+points(sixthchick$Time, residuals(polynomial_model), col = "lightpink")
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+
+```{r}
+# linear model
+par(mfrow=c(1,2))
+m1 <- lm(weight ~ Time, data = ChickWeight)
+with(ChickWeight, plot(Time, weight, col = NA, pch = 19,axes = FALSE, xlab="Time",ylab="Weight"))
+axis(side = 1, at= c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)),font = 5)
+axis(side = 2, at= seq(0,350,50), as.character(seq(0,350,50)), font = 5)
+with(ChickWeight, points(Time, weight, col = "lightpink", pch = 1))
+# plot the fitted regression line using least squares
+abline(m1, col = "lightblue", lwd = 1)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+
+# residuals
+plot(ChickWeight$Time, residuals(m1), col = NA, axes = FALSE, xlab= "Time", ylab = "Residuals", font.lab = 3)
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)),font = 5)
+axis(side = 2, at = seq(-200,200,40), labels =as.character(seq(-200,200,40)), font = 5)
+points(ChickWeight$Time, residuals(m1), col = "lightpink") 
+
+panel.smooth(ChickWeight$Time, residuals(m1), col = NA, col.smooth = "lightblue", span = 0.5, iter = 3)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+
+```
+```{r}
+#polynomial model
+par(mfrow=c(1,2))
+m2 <- lm(weight ~ Time + I(Time ^ 2), data = ChickWeight)
+with(ChickWeight, plot(Time, weight, col = NA, pch = 19, axes = FALSE, xlab="Time",ylab="Weight"))
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)))
+axis(side = 2, at = seq(0,350,50), as.character(seq(0,350,50))) 
+with(ChickWeight, points(Time, weight, col = "lightpink", pch = 1))
+lines(seq(0,max(ChickWeight$Time),length = 50), predict(m2,newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50))) ,col = "lightblue", lwd = 2)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+
+#residuals
+plot(ChickWeight$Time, residuals(m2), col = NA, axes = FALSE, xlab= "Time", ylab = "Residuals", font.lab = 3)
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)), font = 5) 
+axis(side = 2, at = seq(-200,200,40), labels =as.character(seq(-200,200,40)),
+font = 5)
+points(ChickWeight$Time, residuals(m2), col = "lightpink")
+
+panel.smooth(ChickWeight$Time, residuals(m2), col = NA,col.smooth = "lightblue", span = 0.5, iter = 3)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+
+```{r part d33}
+m3 <- lm(weight ~ Time + I(Time ^ 2) + factor(Diet), data = ChickWeight) 
+
+with(ChickWeight, plot(Time, weight, col = NA, pch = 19, cex = 0.8, axes = FALSE, xlab="",ylab=""))
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)), font = 5) 
+axis(side = 2, at = seq(0,350,50), as.character(seq(0,350,50)), font = 5)
+mtext(side = 2, text = "Weight", font = 3, line = 3)
+mtext(side = 1, text = "Time", font = 3, line = 3)
+
+with(ChickWeight, points(Time, weight, col = "lightpink", pch = 1, cex = 0.8))
+
+lines(seq(0,max(ChickWeight$Time),length = 50), predict(m3, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 1)),col = "lightblue", lwd = 1) 
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m3, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 2)),col = "red", lwd = 1) 
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m3, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 3)),col = "navyblue", lwd = 1) 
+lines(seq(0,max(ChickWeight$Time),length = 50), predict(m3, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 4)),col = "mediumpurple", lwd = 1)
+
+legend(x = "topleft", legend = c("Diet 1", "Diet 2", "Diet 3", "Diet 4"),
+col = c("lightblue","red","navyblue","mediumpurple"), lwd = 1)
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+```{r part d2}
+m4 <- lm(weight ~ Time + I(Time ^ 2) : factor(Diet), data = ChickWeight)
+
+with(ChickWeight, plot(Time, weight, col = NA, pch = 19, cex = 0.8, axes = FALSE, xlab="",ylab=""))
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)), font = 5) 
+axis(side = 2, at = seq(0,350,50), as.character(seq(0,350,50)), font = 5)
+mtext(side = 2, text = "Weight", font = 3, line = 3)
+mtext(side = 1, text = "Time", font = 3, line = 3)
+
+with(ChickWeight, points(Time, weight, col = "lightpink", pch = 1, cex = 0.8))
+
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m4, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 1)),col = "lightblue", lwd = 1) 
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m4, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 2)),col = "red", lwd = 1)
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m4, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 3)),col = "navyblue", lwd = 1) 
+lines(seq(0,max(ChickWeight$Time),length = 50),predict(m4, newdata=data.frame(Time = seq(0,max(ChickWeight$Time),length = 50), Diet = 4)),col = "mediumpurple", lwd = 1)
+
+legend(x = "topleft", legend = c("Diet 1", "Diet 2", "Diet 3", "Diet 4"),
+col = c("lightblue","red","navyblue","mediumpurple"), lwd = 1, bg = "white")
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+
+```{r part d3}
+plot(ChickWeight$Time, residuals(m4), col = NA, axes = FALSE, xlab= "Time", ylab = "Residuals", font.lab = 3)
+axis(side = 1, at = c(0,5,10,15,20,25), as.character(c(0,5,10,15,20,25)), font = 5)
+axis(side = 2, at = seq(-200,200,40), labels=as.character(seq(-200,200,40)), font = 5)
+
+
+points(ChickWeight$Time,residuals(m4),col=c("lightblue","red","navyblue","mediumpurple")[ChickWeight$Diet], cex = 0.8) 
+legend(x = "topleft", legend = c("Diet 1", "Diet 2", "Diet 3", "Diet 4"),
+col = c("lightblue","red","navyblue","mediumpurple"), pch = 19, bg = "white")
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+```
+
+#### Question 4
+
+```{r part a4}
+cigs <- read.csv("/Users/xiongcaiwei/Desktop/cigs.csv")
+X1 <- cigs$TAR
+X2 <- cigs$NICOTINE
+X3 <- cigs$WEIGHT
+Y <- cigs$CO
+(length(X1))
+(length(X2))
+(length(X3))
+(length(Y))
+```
+```{r Hzero part a}
+h_0a <- lm(Y~X1+X2, data=cigs)
+h_1a <- lm(Y~X1+X2+X3, data=cigs) 
+anova(h_0a,h_1a)
+summary(h_0a)
+summary(h_1a)
+drop1(h_1a, test = "F")
+```
+```{r Hzero part b}
+h_0b <- lm(Y~X1, data=cigs)
+h_1b <- lm(Y~X1+X2, data=cigs)
+anova(h_0b,h_1b)
+summary(h_0b)
+summary(h_1b)
+drop1(h_1b, test = "F")
+```
+
+
